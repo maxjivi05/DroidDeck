@@ -124,6 +124,33 @@ bl_components() {
 }
 """
 
+BL_PROTON_ENV_SETUP = """
+bl_proton_env() {
+  base=$1
+  echo "bannerlator-proton: ${base##*/} $(cat "$base/version" 2>/dev/null)" >&2
+  # The session puts the client's own libraries first for the client. Wine resolves Vulkan, gnutls,
+  # SDL, FFmpeg and the rest against the rootfs, as it would inside Steam's runtime container.
+  if [ -n "${LD_LIBRARY_PATH:-}" ]; then
+    kept=
+    IFS=: read -r -a dirs <<<"$LD_LIBRARY_PATH"
+    for dir in "${dirs[@]}"; do
+      case $dir in
+        "" | */steamrtarm64 | */steamrtarm64/*) ;;
+        *) kept=${kept:+$kept:}$dir ;;
+      esac
+    done
+    if [ -n "$kept" ]; then
+      export LD_LIBRARY_PATH="$kept"
+    else
+      unset LD_LIBRARY_PATH
+    fi
+  fi
+  # A Proton that defaults to its PipeWire audio driver hangs at audio init: the session runs
+  # PulseAudio and no PipeWire server.
+  export PROTON_USE_PIPEWIRE=${PROTON_USE_PIPEWIRE:-0}
+}
+"""
+
 # Resolves the depot at launch time, so the tool can be registered before the depot exists and
 # survives the client updating or replacing it. Proton takes its base directory from
 # dirname(sys.argv[0]) without resolving it, so it is run from the depot itself.
@@ -233,6 +260,7 @@ for name in %s; do
     bl_directaudio "$depot"
     bl_game_cpus
     bl_idtech3 "$@"
+    bl_proton_env "$depot"
     exec ${BL_TASKSET:-} /usr/local/bin/bannerlator-game-env "$depot/proton" "$verb" "$@" "${BL_EXTRA_ARGS[@]}"
   fi
 done
@@ -244,7 +272,7 @@ exit 1
 # something else.
 LAUNCHER_SH = LAUNCHER_SH.replace(
     "verb=$1; shift", "verb=$1; shift\n" + BL_DIRECTAUDIO_SETUP + BL_GAME_CPUS_SETUP + BL_IDTECH3_SETUP
-    + BL_COMPONENTS_SETUP, 1)
+    + BL_COMPONENTS_SETUP + BL_PROTON_ENV_SETUP, 1)
 
 # A third-party Proton dropped into compatibilitytools.d - GE-Proton, proton-cachyos, anything of
 # that shape - is adopted rather than used as shipped, for the same two reasons Valve's ARM64 depot
@@ -280,6 +308,7 @@ bl_components "$here"
 bl_directaudio "$here"
 bl_game_cpus
 bl_idtech3 "$@"
+bl_proton_env "$here"
 # Proton takes its base directory from dirname(sys.argv[0]) without resolving it, so it has to be
 # started from its own tree.
 exec ${BL_TASKSET:-} /usr/local/bin/bannerlator-game-env "$here/%s" "$verb" "$@" "${BL_EXTRA_ARGS[@]}"
@@ -442,7 +471,7 @@ def adopt_extras(tools):
             body = (EXTRA_WRAPPER_SH % entry_point).replace(
                     'here=$(dirname "$0")',
                     'here=$(dirname "$0")\n' + BL_DIRECTAUDIO_SETUP + BL_GAME_CPUS_SETUP + BL_IDTECH3_SETUP
-                    + BL_COMPONENTS_SETUP, 1)
+                    + BL_COMPONENTS_SETUP + BL_PROTON_ENV_SETUP, 1)
             with open(wrapper, "w", encoding="utf-8") as f:
                 f.write(body)
             os.chmod(wrapper, 0o755)

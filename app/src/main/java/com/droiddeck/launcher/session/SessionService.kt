@@ -506,7 +506,7 @@ class SessionService : Service() {
         LinuxVulkanDriver.resolveIcdPath(this, linuxDriverId)
             ?.let { guest.add(LinuxVulkanDriver.ENV + "=" + it) }
         // Turnip's own debug switches, for the runtime's driver and everything on it. The file in
-        // Downloads holds the value verbatim ("sysmem", "sysmem,deck_emu"); with nothing there, an
+        // Downloads holds the value verbatim ("sysmem", "sysmem,nolrz"); with nothing there, an
         // imported driver from the A710/A720/A722 legs gets "sysmem" on its own, which is what both
         // its authors advise for those GPUs and what nothing else in the list needs.
         tuDebug(linuxDriverId)?.let { guest.add("TU_DEBUG=$it") }

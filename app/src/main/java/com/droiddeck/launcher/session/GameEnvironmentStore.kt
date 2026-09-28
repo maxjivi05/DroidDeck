@@ -54,10 +54,28 @@ object GameEnvironmentStore {
         publish(context, config)
     }
 
+    private val writer = java.util.concurrent.Executors.newSingleThreadExecutor()
+    private val main = android.os.Handler(android.os.Looper.getMainLooper())
+
+    /**
+     * [save] on one app-wide thread, so edits land in the order made and outlive the page that made
+     * them. On failure [onFailure] gets what is on disk, or null when that cannot be read either.
+     */
+    fun saveLater(context: Context, config: GameEnvironment.Config, onFailure: (GameEnvironment.Config?) -> Unit) {
+        val app = context.applicationContext
+        writer.execute {
+            val error = runCatching { save(app, config) }.exceptionOrNull() ?: return@execute
+            android.util.Log.e("GameEnvironment", "Could not save game environment", error)
+            val stored = runCatching { read(app) }.getOrNull()
+            main.post { onFailure(stored) }
+        }
+    }
+
+    /** bannerlator-game-env applies "defaults" only where the inherited environment has no value. */
     @Synchronized
     fun publish(context: Context, config: GameEnvironment.Config = read(context)) {
-        val resolved = config.copy(shared = GameEnvironment.defaults(SessionPrefs.fexPreset(context)) + config.shared)
-        write(File(LinuxRuntime.rootDir(context), GUEST_FILE), encode(resolved).toString())
+        val defaults = JSONObject(GameEnvironment.defaults(SessionPrefs.fexPreset(context)))
+        write(File(LinuxRuntime.rootDir(context), GUEST_FILE), encode(config).put("defaults", defaults).toString())
     }
 
     private fun write(file: File, text: String) {

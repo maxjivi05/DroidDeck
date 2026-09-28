@@ -105,7 +105,7 @@ fun PerformancePage(
         SettingsGroup("Session fixes") {
             ToggleRow(
                 host, "sysmem", "Turnip: sysmem rendering",
-                "Required on Adreno 710/720/722. May fix corruption on other Adreno GPUs, but can reduce performance.",
+                "For the whole session, including Steam. Required on Adreno 710/720/722; Proton games already get it from Game environment.",
                 tuSysmem, onChange = onTuSysmem,
             )
             ToggleRow(

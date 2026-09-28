@@ -15,7 +15,7 @@ object FexPreset {
         Preset("COMPATIBILITY", R.string.fex_compatibility_label, R.string.fex_compatibility_detail, tso(1, 1, 1, 1) + listOf("FEX_X87REDUCEDPRECISION=0", "FEX_MULTIBLOCK=1")),
         Preset("INTERMEDIATE", R.string.fex_intermediate_label, R.string.fex_intermediate_detail, tso(1, 0, 0, 1) + listOf("FEX_X87REDUCEDPRECISION=1", "FEX_MULTIBLOCK=1")),
         Preset("PERFORMANCE", R.string.fex_performance_label, R.string.fex_performance_detail, tso(0, 0, 0, 0) + listOf("FEX_X87REDUCEDPRECISION=1", "FEX_MULTIBLOCK=1")),
-        Preset("PERFORMANCE_TSO", R.string.fex_performance_tso_label, R.string.fex_performance_tso_detail, tso(1, 0, 0, 0) + listOf("FEX_X87REDUCEDPRECISION=1", "FEX_MULTIBLOCK=1")),
+        Preset("PERFORMANCE_TSO", R.string.fex_performance_tso_label, R.string.fex_performance_tso_detail, tso(1, 0, 0, 0) + listOf("FEX_X87REDUCEDPRECISION=1", "FEX_MULTIBLOCK=1", "FEX_SMCCHECKS=mtrack")),
         Preset("EXTREME", R.string.fex_extreme_label, R.string.fex_extreme_detail,
             tso(0, 0, 0, 0) + listOf("FEX_X87REDUCEDPRECISION=1", "FEX_MULTIBLOCK=1", "FEX_SMCCHECKS=none", "FEX_DISABLEL2CACHE=1", "FEX_DYNAMICL1CACHE=1", "FEX_DYNAMICL1CACHEINCREASECOUNTHEURISTIC=250", "FEX_DYNAMICL1CACHEDECREASECOUNTHEURISTIC=50")),
         Preset("EXTREME_TSO", R.string.fex_extreme_tso_label, R.string.fex_extreme_tso_detail,

@@ -25,14 +25,25 @@ object GameEnvironment {
     fun validValue(value: String) = '\u0000' !in value && value.length <= 8192
     fun validScope(scope: String) = scope.isEmpty() || (Regex("[1-9][0-9]*").matches(scope) && scope.toLongOrNull()?.let { it in 1..4294967295L } == true)
 
-    fun defaults(preset: String): Map<String, String?> = linkedMapOf<String, String?>(
+    /** Applied at launch only where the game's inherited environment leaves a variable unset. */
+    fun defaults(preset: String): Map<String, String> = linkedMapOf(
         "MESA_SHADER_CACHE_DISABLE" to "false",
+        "TU_DEBUG" to "sysmem",
         "VKD3D_FEATURE_LEVEL" to "12_2",
-        "VKD3D_SHADER_MODEL" to "6_9",
+        "VKD3D_SHADER_MODEL" to "6_6",
     ).apply {
         FexPreset.env(preset).forEach { put(it.substringBefore('='), it.substringAfter('=')) }
     }
 
-    fun effective(config: Config, preset: String, scope: String): Map<String, String?> =
-        defaults(preset) + config.shared + if (scope.isEmpty()) emptyMap() else config.games[scope].orEmpty()
+    enum class Origin { DEFAULT, SHARED, PROFILE }
+    data class Entry(val name: String, val value: String?, val origin: Origin)
+
+    /** What a profile's game starts with, in name order, each entry tagged with where it comes from. */
+    fun resolve(config: Config, preset: String, scope: String): List<Entry> {
+        val entries = LinkedHashMap<String, Entry>()
+        defaults(preset).forEach { (name, value) -> entries[name] = Entry(name, value, Origin.DEFAULT) }
+        if (scope.isNotEmpty()) config.shared.forEach { (name, value) -> entries[name] = Entry(name, value, Origin.SHARED) }
+        config.entries(scope).forEach { (name, value) -> entries[name] = Entry(name, value, Origin.PROFILE) }
+        return entries.values.sortedWith(compareBy({ it.name.uppercase(java.util.Locale.ROOT) }, { it.name }))
+    }
 }

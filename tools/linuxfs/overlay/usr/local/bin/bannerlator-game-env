@@ -2,6 +2,7 @@
 import json
 import os
 import re
+import shlex
 import sys
 from pathlib import Path
 
@@ -19,22 +20,46 @@ def game_id(env):
     return str(number % 2**32)
 
 
-def apply_config(env, config, app_id):
-    if config.get("version") != 1:
-        raise ValueError("unsupported environment configuration")
-    result = env.copy()
-    entries = dict(config.get("shared", {}))
-    entries.update(config.get("games", {}).get(app_id, {}))
+def checked(entries, unset):
     for name, value in entries.items():
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
             raise ValueError("invalid environment name")
+        if value is None and unset:
+            continue
+        if not isinstance(value, str) or "\0" in value or len(value) > 8192:
+            raise ValueError("invalid environment value")
+    return entries
+
+
+def apply_config(env, config, app_id):
+    """Built-in defaults fill only what the inherited environment leaves unset; edits always win."""
+    if config.get("version") != 1:
+        raise ValueError("unsupported environment configuration")
+    defaults = checked(dict(config.get("defaults", {})), unset=False)
+    entries = dict(config.get("shared", {}))
+    entries.update(config.get("games", {}).get(app_id, {}))
+    checked(entries, unset=True)
+    result = env.copy()
+    names = set(defaults) | set(entries)
+    for name, value in defaults.items():
+        result.setdefault(name, value)
+    for name, value in entries.items():
         if value is None:
             result.pop(name, None)
-        elif isinstance(value, str) and "\0" not in value and len(value) <= 8192:
-            result[name] = value
         else:
-            raise ValueError("invalid environment value")
-    return result
+            result[name] = value
+    # Proton writes its log to $HOME unless told otherwise; beside the session's own logs it is
+    # collected and shared with them.
+    if (result.get("PROTON_LOG", "0") not in ("", "0") and "PROTON_LOG_DIR" not in result and "PROTON_LOG_DIR" not in entries
+            and result.get("BL_DEBUG_DIR")):
+        result["PROTON_LOG_DIR"] = result["BL_DEBUG_DIR"]
+        names.add("PROTON_LOG_DIR")
+    return result, sorted(names)
+
+
+def summary(app_id, env, names):
+    values = (f"{name}={shlex.quote(env[name])}" if name in env else f"-{name}" for name in names)
+    return f"bannerlator-game-env: app {app_id}: " + " ".join(values)
 
 
 def main():
@@ -47,7 +72,8 @@ def main():
         path = Path.home() / ".config/droiddeck/game-environment.json"
         try:
             with path.open(encoding="utf-8") as source:
-                env = apply_config(env, json.load(source), app_id)
+                env, names = apply_config(env, json.load(source), app_id)
+            print(summary(app_id, env, names), file=sys.stderr)
         except FileNotFoundError:
             pass
         except (OSError, ValueError, TypeError, AttributeError):

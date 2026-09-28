@@ -32,21 +32,21 @@ class GameEnvironmentStoreTest {
         )
         GameEnvironmentStore.save(context, config)
         assertEquals(config, GameEnvironmentStore.read(context))
-        val published = GameEnvironmentStore.decode(JSONObject(guest.readText()))
-        assertEquals("false", published.shared["MESA_SHADER_CACHE_DISABLE"])
-        assertEquals("12_2", published.shared["VKD3D_FEATURE_LEVEL"])
-        assertEquals("6_9", published.shared["VKD3D_SHADER_MODEL"])
-        assertEquals(config.games, published.games)
-        assertEquals(config.shared["LITERAL"], published.shared["LITERAL"])
-        assertEquals("", published.shared["EMPTY"])
+        val json = JSONObject(guest.readText())
+        assertEquals(config, GameEnvironmentStore.decode(json))
+        val defaults = json.getJSONObject("defaults")
+        assertEquals("false", defaults.getString("MESA_SHADER_CACHE_DISABLE"))
+        assertEquals("sysmem", defaults.getString("TU_DEBUG"))
+        assertEquals("12_2", defaults.getString("VKD3D_FEATURE_LEVEL"))
+        assertEquals("6_6", defaults.getString("VKD3D_SHADER_MODEL"))
     }
 
     @Test fun changingFexPresetPublishesForNextGameLaunch() {
         GameEnvironmentStore.save(context, GameEnvironment.Config())
         SessionPrefs.setFexPreset(context, "EXTREME")
-        assertEquals("none", JSONObject(guest.readText()).getJSONObject("shared").getString("FEX_SMCCHECKS"))
+        assertEquals("none", JSONObject(guest.readText()).getJSONObject("defaults").getString("FEX_SMCCHECKS"))
         SessionPrefs.setFexPreset(context, "")
-        assertFalse(JSONObject(guest.readText()).getJSONObject("shared").has("FEX_SMCCHECKS"))
+        assertFalse(JSONObject(guest.readText()).getJSONObject("defaults").has("FEX_SMCCHECKS"))
     }
 
     @Test fun invalidDataCannotReplaceSavedConfiguration() {

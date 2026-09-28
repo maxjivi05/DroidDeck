@@ -24,7 +24,8 @@ object SessionFiles {
      * rename, so a session that still has one mapped keeps the file it opened.
      */
     fun stage(context: Context, root: File) {
-        GameEnvironmentStore.publish(context)
+        runCatching { GameEnvironmentStore.publish(context) }
+            .onFailure { Log.e(TAG, "could not publish the game environment; games keep the last one", it) }
         val files = arrayOf(
             "usr/local/bin/bannerlator-game-env" to "usr/local/bin/bannerlator-game-env",
             "libblsession.so" to "usr/local/lib/libblsession.so",
