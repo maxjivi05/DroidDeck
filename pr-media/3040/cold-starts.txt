@@ -1,0 +1,11 @@
+Astra 2, FEX with 0008, cold start from no session, catalog shown then dialog closed:
+run=1 catalog after 18 s agentstarts=2 fatal=0 jserr=0 leftover=0
+run=2 catalog after 18 s agentstarts=2 fatal=0 jserr=0 leftover=0
+run=3 catalog after 18 s agentstarts=2 fatal=0 jserr=0 leftover=0
+run=4 catalog after 18 s agentstarts=2 fatal=0 jserr=0 leftover=0
+
+dialog closed while CurseForge was still launching:
+run=1 closed after 9 s leftover=0
+run=2 closed after 10 s leftover=0
+run=3 closed after 9 s leftover=0
+run=4 closed after 9 s leftover=0
