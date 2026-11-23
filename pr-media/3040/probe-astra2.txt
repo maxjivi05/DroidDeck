@@ -1,0 +1,2 @@
+stock FEX-2611.1: signals=2001 matched=1 stale=1999
+patched (0008):   signals=2005 matched=2000 stale=0
