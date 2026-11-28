@@ -50,6 +50,12 @@ class DesktopReturnGamingTest(unittest.TestCase):
         self.assertEqual(self.session("return", rc=1)[:2], (1, None))
         self.assertEqual(self.session("return", bottom=True)[:2], (0, None))
 
+    def test_the_logout_request_outlives_starting_the_shutdown_service(self):
+        exec_line = re.search(r"^Exec=(.*)$", ENTRY, re.M).group(1)
+        call = shlex.split(shlex.split(exec_line)[2].split(";")[-1])
+        self.assertEqual(call[:2], ["exec", "dbus-send"])
+        self.assertIn("--print-reply", call)
+
     def test_the_app_ships_the_shortcut_with_the_script(self):
         source = (ROOT / "app/src/main/java/com/droiddeck/launcher/session/SessionFiles.kt").read_text()
         self.assertIn('"usr/share/applications/droiddeck-return-gaming.desktop" to '
