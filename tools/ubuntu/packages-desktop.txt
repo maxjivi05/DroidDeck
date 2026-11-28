@@ -215,6 +215,7 @@ power-profiles-daemon
 powerdevil
 ppa-purge
 print-manager
+pyqt6-dev-tools
 python3-dbus
 python3-launchpadlib
 python3-setuptools
@@ -241,6 +242,7 @@ software-properties-qt
 squashfs-tools
 synaptic
 systemsettings
+ubuntu-drivers-common
 udisks2
 unrar-free
 upower
