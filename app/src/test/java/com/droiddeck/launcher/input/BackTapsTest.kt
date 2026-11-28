@@ -97,5 +97,27 @@ class BackTapsTest {
         assertEquals(listOf(false), seen)
     }
 
+    @Test fun aDoubleTapWhoseActionMatchesTheImmediateSingleTapIsNotRepeated() {
+        var same = true
+        val coalesced = BackTaps({ window }, { atOnce }, seen::add, { same })
+        coalesced.tap()
+        coalesced.tap()
+        assertEquals(listOf(false), seen)
+        assertFalse(coalesced.pending)
+        same = false
+        coalesced.tap()
+        coalesced.tap()
+        assertEquals(listOf(false, false, true), seen)
+    }
+
+    @Test fun aDeferredDoubleTapStillActsWhenBothActionsMatch() {
+        atOnce = false
+        val coalesced = BackTaps({ window }, { atOnce }, seen::add, { true })
+        coalesced.tap()
+        coalesced.tap()
+        advance(1000)
+        assertEquals(listOf(true), seen)
+    }
+
     private fun advance(ms: Long) = shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(ms))
 }

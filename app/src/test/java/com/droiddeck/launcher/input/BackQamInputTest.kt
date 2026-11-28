@@ -218,6 +218,19 @@ class BackQamInputTest {
         assertTrue(taps.isEmpty())
     }
 
+    @Test fun cancellingHeldInputCanKeepThePendingTapForTheDoubleAction() {
+        val direct = BackQamInput(changes::add, taps::add, atOnce = { true })
+        fun press(action: Int) = direct.onKeyEvent(KeyEvent(action, KeyEvent.KEYCODE_BACK), true)
+        press(KeyEvent.ACTION_DOWN)
+        press(KeyEvent.ACTION_UP)
+        direct.cancel(keepTap = true)
+        assertTrue(direct.awaitingTap)
+        press(KeyEvent.ACTION_DOWN)
+        press(KeyEvent.ACTION_UP)
+        assertEquals(listOf(false, true), taps)
+        assertFalse(direct.awaitingTap)
+    }
+
     @Test fun cancellationAlsoDiscardsAPendingSingleTap() {
         send(KeyEvent.ACTION_DOWN)
         send(KeyEvent.ACTION_UP)

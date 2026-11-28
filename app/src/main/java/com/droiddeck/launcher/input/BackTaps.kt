@@ -7,6 +7,7 @@ class BackTaps(
     private val windowMs: () -> Long,
     private val atOnce: () -> Boolean,
     private val onTap: (Boolean) -> Unit,
+    private val sameAction: () -> Boolean = { false },
 ) {
     private val handler = Handler(Looper.getMainLooper())
     private var deferred = false
@@ -20,7 +21,7 @@ class BackTaps(
     fun tap() {
         if (pending) {
             cancel()
-            onTap(true)
+            if (deferred || !sameAction()) onTap(true)
             return
         }
         pending = true

@@ -450,11 +450,13 @@ class SessionActivity : ComponentActivity(), SurfaceHolder.Callback, com.droidde
         return true
     }
     private val uiHandler = Handler(Looper.getMainLooper())
+    private var backTapOpenedDrawer = false
     private val backTapsAtOnce: Boolean get() = SessionState.mode != SessionService.MODE_STEAM || !backActionsInverted
     private val backTaps = com.droiddeck.launcher.input.BackTaps(
         windowMs = { backDoubleTapMs.toLong() },
         atOnce = { backTapsAtOnce },
         onTap = { performBackAction(double = it) },
+        sameAction = { SessionState.mode != SessionService.MODE_STEAM },
     )
     private val backQamInput = com.droiddeck.launcher.input.BackQamInput(
         setPressed = { padBridge?.setBackQamPressed(it) },
@@ -463,6 +465,7 @@ class SessionActivity : ComponentActivity(), SurfaceHolder.Callback, com.droidde
         onCancel = { padBridge?.cancelBackQam() },
         holds = { backHold },
         atOnce = { backTapsAtOnce },
+        sameAction = { SessionState.mode != SessionService.MODE_STEAM },
     )
     private val mouseBackInput = com.droiddeck.launcher.input.MouseBackInput(
         sendRight = { down -> heldButtons.set(32, PointerGestures.BTN_RIGHT, down) },
@@ -1334,8 +1337,10 @@ class SessionActivity : ComponentActivity(), SurfaceHolder.Callback, com.droidde
                 LaunchedEffect(drawerOpen, menuOwnsController, pcKeyboardOpen, achievementsOpen, gestureSettingsOpen, inputSettingsOpen, pipUi, SessionState.suspended, resumed, appTextFocus) {
                     updateOnScreenControls()
                     padBridge?.setInputEnabled(resumed && !menuOwnsController && !pcKeyboardOpen && !achievementsOpen && !gestureSettingsOpen && !inputSettingsOpen && !pipUi && !appTextFocus && !SessionState.suspended)
-                    if (drawerOpen || pcKeyboardOpen || achievementsOpen || gestureSettingsOpen || inputSettingsOpen || pipUi || appTextFocus || SessionState.suspended) {
-                        backQamInput.cancel()
+                    if (!drawerOpen) backTapOpenedDrawer = false
+                    val otherPanel = pcKeyboardOpen || achievementsOpen || gestureSettingsOpen || inputSettingsOpen || pipUi || appTextFocus || SessionState.suspended
+                    if (drawerOpen || otherPanel) {
+                        backQamInput.cancel(keepTap = backTapOpenedDrawer && !otherPanel)
                         com.droiddeck.launcher.input.HomeButtonShortcuts.cancel(this@SessionActivity)
                         cancelTouchGestures()
                     }
@@ -2127,7 +2132,10 @@ class SessionActivity : ComponentActivity(), SurfaceHolder.Callback, com.droidde
     private fun performBackAction(double: Boolean) {
         val isSteam = SessionState.mode == SessionService.MODE_STEAM
         val opensQam = isSteam && (double xor backActionsInverted)
-        if (opensQam) triggerSteamQam() else if (!dockedTouchOnly) drawerOpen = !drawerOpen
+        if (opensQam) triggerSteamQam() else if (!dockedTouchOnly) {
+            drawerOpen = !drawerOpen
+            backTapOpenedDrawer = drawerOpen && !double
+        }
     }
 
     private fun handleHomeGuideIntent(incoming: Intent?) {
@@ -3692,6 +3700,14 @@ class SessionActivity : ComponentActivity(), SurfaceHolder.Callback, com.droidde
             return true
         }
         if (pipUi) return true
+        if (event.keyCode == KeyEvent.KEYCODE_BACK && backTapOpenedDrawer && backTaps.pending) {
+            when {
+                event.action == KeyEvent.ACTION_DOWN -> backTaps.hold()
+                event.action == KeyEvent.ACTION_UP && !event.isCanceled -> backTaps.tap()
+                event.action == KeyEvent.ACTION_UP -> backTaps.cancel()
+            }
+            return true
+        }
         val pad = com.droiddeck.launcher.input.JoyCon.normalize(event)
         if (pad !== event) return dispatchKeyEvent(pad)
         val fromController = PadBridge.isControllerKeyEvent(event)
