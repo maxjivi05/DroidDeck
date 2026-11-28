@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 RUN = Path(__file__).resolve().parents[1] / "linuxfs/overlay/usr/local/bin/droiddeck-appimage-run"
-KEYS = ("TU_DEBUG", "DROIDDECK_GAME_TU_DEBUG", "QT_QPA_PLATFORM", "WAYLAND_DISPLAY", "SDL_VIDEODRIVER", "XDG_SESSION_TYPE", "QT_WAYLAND_DISABLE_WINDOWDECORATION", "DISABLE_GAMESCOPE_WSI")
+KEYS = ("TU_DEBUG", "DROIDDECK_GAME_TU_DEBUG", "QT_QPA_PLATFORM", "WAYLAND_DISPLAY", "SDL_VIDEODRIVER", "XDG_SESSION_TYPE", "QT_WAYLAND_DISABLE_WINDOWDECORATION", "DISABLE_GAMESCOPE_WSI", "QTWEBENGINE_DISABLE_SANDBOX")
 QUICK = ("usr/lib/libQt6Quick.so.6", "usr/lib/libvulkan.so.1", "usr/plugins/platforms/libqwayland-generic.so")
 RUN_MODE = {"GAMESCOPE_WAYLAND_DISPLAY": "gamescope-0", "WAYLAND_DISPLAY": "gamescope-0", "DISPLAY": ":0",
             "QT_QPA_PLATFORM": "xcb", "SDL_VIDEODRIVER": "x11", "XDG_SESSION_TYPE": "x11"}
@@ -127,6 +127,11 @@ class AppImageRunTest(unittest.TestCase):
         env, _ = self.launch(RUN_MODE)
         self.assertEqual("wayland;xcb", env["QT_QPA_PLATFORM"])
 
+
+    def test_a_web_engine_app_starts_as_root_in_either_session(self):
+        for session in (RUN_MODE, DESKTOP):
+            env, _ = self.launch(session)
+            self.assertEqual("1", env["QTWEBENGINE_DISABLE_SANDBOX"])
 
     def test_a_program_drops_the_sessions_sysmem_like_a_steam_game(self):
         env, _ = self.launch(dict(RUN_MODE, TU_DEBUG="sysmem", DROIDDECK_GAME_TU_DEBUG=""))
