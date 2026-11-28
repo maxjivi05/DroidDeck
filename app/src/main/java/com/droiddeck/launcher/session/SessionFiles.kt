@@ -35,6 +35,7 @@ object SessionFiles {
         "usr/local/bin/kwin_wayland_wrapper" to "usr/local/bin/kwin_wayland_wrapper",
         "usr/lib/firefox/defaults/pref/droiddeck.js" to "usr/lib/firefox/defaults/pref/droiddeck.js",
         "etc/xdg/autostart/droiddeck-clipboard.desktop" to "etc/xdg/autostart/droiddeck-clipboard.desktop",
+        "usr/share/applications/droiddeck-return-gaming.desktop" to "usr/share/applications/droiddeck-return-gaming.desktop",
         "etc/xdg/fastfetch/config.jsonc" to "etc/xdg/fastfetch/config.jsonc",
     )
 

@@ -32,6 +32,7 @@ def source_assets(overlay=OVERLAY):
             result[desktop / name] = 'assets/linuxfs/usr/local/bin/' + name
         result[desktop / 'firefox-droiddeck.js'] = 'assets/linuxfs/usr/lib/firefox/defaults/pref/droiddeck.js'
         result[desktop / 'droiddeck-clipboard.desktop'] = 'assets/linuxfs/etc/xdg/autostart/droiddeck-clipboard.desktop'
+        result[desktop / 'droiddeck-return-gaming.desktop'] = 'assets/linuxfs/usr/share/applications/droiddeck-return-gaming.desktop'
         result[desktop / 'fastfetch.jsonc'] = 'assets/linuxfs/etc/xdg/fastfetch/config.jsonc'
         result[overlay.parent.parent / 'mangoapp/mangoapp'] = 'assets/linuxfs/usr/local/bin/mangoapp'
     return result

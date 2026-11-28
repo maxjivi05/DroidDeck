@@ -228,12 +228,16 @@ fi
 if ! /usr/local/bin/droiddeck-pipewire start; then
   echo "== pipewire: not running; screen capture has no picture"
 fi
+return_gaming=/run/droiddeck/return-gaming
+mkdir -p /run/droiddeck
+rm -f "$return_gaming"
 echo "== droiddeck-desktop: Plasma on $WAYLAND_DISPLAY"
 dbus-run-session -- startplasma-wayland
 rc=$?
 /usr/local/bin/droiddeck-pipewire stop
 echo "== droiddeck-desktop: Plasma ended ($rc)"
-if [ "$rc" -eq 0 ] && [ -z "${DD_BOTTOM_DESKTOP:-}" ]; then
+if [ "$rc" -eq 0 ] && [ -z "${DD_BOTTOM_DESKTOP:-}" ] && [ -e "$return_gaming" ]; then
+  rm -f "$return_gaming"
   /usr/local/bin/droiddeck-steam-launch bigpicture
   sleep 30
 fi
